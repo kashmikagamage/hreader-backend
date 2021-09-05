@@ -24,15 +24,18 @@ var User = db.define('user', {
         allowNull: false
     },
     lastname: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
         // allowNull defaults to true
     },
     gender: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
         // allowNull defaults to true
     },
     address: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
         // allowNull defaults to true
     },
     status: {
