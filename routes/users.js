@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const passportInit = require("../auth/passport");
+const { validateNumeric, validateText, validateEmail, handleValidationErrors, body } = require("../utils/validators");
 
 var User = require("../logic/user");
 

@@ -51,23 +51,23 @@ module.exports.updatePasssword = function (id, newPassword, callback) {
 
 module.exports.updateRefreshToken = function (id, refreshToken, callback) {
   console.log("Create user");
-      User.update(
-        {
-          refreshToken: refreshToken,
-        },
-        {
-          where: {
-            id: id,
-          },
-        }
-      )
-        .then((user) => {
-          callback(null, user);
-        })
-        .catch((err) => {
-          callback(err);
-        });
-    
+  User.update(
+    {
+      refreshToken: refreshToken,
+    },
+    {
+      where: {
+        id: id,
+      },
+    }
+  )
+    .then((user) => {
+      callback(null, user);
+    })
+    .catch((err) => {
+      callback(err);
+    });
+
 };
 
 module.exports.getUserByUsername = function (nic, callback) {
@@ -624,7 +624,7 @@ module.exports.updateUser = function (id, newUser, callback) {
 
 // }
 
-module.exports.getUsersAdmin = function ( callback) {
+module.exports.getUsersAdmin = function (callback) {
   User.findAll({
     attributes: [
       `id`,
@@ -645,9 +645,9 @@ module.exports.getUsersAdmin = function ( callback) {
     });
 };
 
-module.exports.getTeachersAdmin = function ( callback) {
+module.exports.getTeachersAdmin = function (callback) {
   User.findAll({
-    where:{type: "Teacher"},
+    where: { type: "Teacher" },
     attributes: [
       `id`,
       `nic`,

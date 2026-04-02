@@ -8,7 +8,7 @@ var Trainer = db.define('trainer', {
     nic: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        unique: 'trainer_nic_unique'
     },
 
     password: {
@@ -45,9 +45,18 @@ var Trainer = db.define('trainer', {
     workplace: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    googleId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        unique: 'trainer_googleId_unique'
+    },
+    email: {
+        type: Sequelize.STRING,
+        allowNull: true
     }
-    
-    
+
+
 }, {
     timestamps: true,
     createdAt: 'CreatedAt',

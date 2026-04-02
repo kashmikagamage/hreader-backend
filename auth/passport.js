@@ -1,80 +1,34 @@
 var passport = require("passport");
 var LocalStrategy = require("passport-local"),
   Strategy;
+var GoogleStrategy = require("passport-google-oauth20").Strategy;
 var User = require("../logic/user");
 var Trainer = require("../logic/trainer");
 const jwt = require("jsonwebtoken");
-const { v4: uuidv4 } = require('uuid');
 
 module.exports = () => {
   passport.use(
     "local.user",
     new LocalStrategy(function(username, password, done) {
-      console.log("Authenticated...");
-      console.log("Authenticated...456");
       User.getUserByUsername(username, function(err, user) {
         if (err) throw err;
         if (!user) {
-          console.log("Unknown user");
-          return done(null, false, { message: "Unknown user" });
+          return done(null, false, { message: "Invalid credentials" });
         }
         User.comparePassword(password, user.password, function(err, isMatch) {
           if (err) throw err;
           if (isMatch) {
-            const payload = {
-              user: {
-                id: user.id,
-              }
-            };
-
-            // const token = jwt.sign(user.id, "Sahan960318");
+            const payload = { user: { id: user.id } };
             let token1 = '';
-            return jwt.sign(payload, "Sahan960318", { expiresIn: '24h' }, (function (err, token) {
+            return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' }, function(err, token) {
               if (err) throw err;
-              console.log(token);
-              token1 = token ;
-              // const refreshToken = uuidv4();
-              // console.log(refreshToken);
-
-              // User.updateRefreshToken(user.id, refreshToken, function (err, res) {
-                
-              //   if (err) {
-              //     // res.status(403).json({
-              //     //   type: 'error',
-              //     //   message: 'Something went wrong, please try again later'
-              //     // });
-              //   console.log("Something went wrong, please try again later");
-
-              //   }
-              //   console.log("tokegfdfhn is ");
-  
-              //   // res.status(200).json({
-              //   //   type: 'success',
-              //   //   message: {
-              //   //     accessToken: token,
-              //   //     refreshToken: refreshToken,
-              //   //     role: user.type,
-              //   //     expiresIn: Math.floor(Date.now() / 1000) + (60 * 60)
-              //   //   }
-              //   // });
-              // });
-
+              token1 = token;
               var newUser = user.toJSON();
-            newUser.token = token1;
-            return done(null, newUser);
-            }));
-            // var newUser = user.toJSON();
-            // newUser.refreshToken = token1;
-            // console.log("token is ");
-            // console.log(newUser.refreshToken);
-            // console.log(newUser.token);
-            // console.log(token1);
-            // console.log(newUser);
-
-            // return done(null, newUser);
+              newUser.token = token1;
+              return done(null, newUser);
+            });
           } else {
-            console.log("Invalid password");
-            return done(null, false, { message: "Invalid password" });
+            return done(null, false, { message: "Invalid credentials" });
           }
         });
       });
@@ -84,99 +38,80 @@ module.exports = () => {
   passport.use(
     "local.trainer",
     new LocalStrategy(function(trainername, password, done) {
-      console.log("Authenticated...");
-      console.log("Authenticated...456");
       Trainer.getTrainerByTrainername(trainername, function(err, trainer) {
-          console.log("trainer");
-          console.log(trainer);
-          console.log(trainer.nic);
-          console.log(!trainer);
-          console.log("trainer");
-
-          if (err) throw err;
+        if (err) throw err;
         if (!trainer) {
-          console.log("Unknown trainer12");
-          return done(null, false, { message: "Unknown trainer123" });
+          return done(null, false, { message: "Invalid credentials" });
         }
         Trainer.comparePassword(password, trainer.password, function(err, isMatch) {
           if (err) throw err;
           if (isMatch) {
-            const payload = {
-              trainer: {
-                id: trainer.id,
-              }
-            };
-
-            // const token = jwt.sign(user.id, "Sahan960318");
+            const payload = { trainer: { id: trainer.id } };
             let token1 = '';
-            return jwt.sign(payload, "Sahan960318", { expiresIn: '24h' }, (function (err, token) {
+            return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' }, function(err, token) {
               if (err) throw err;
-              console.log(token);
-              token1 = token ;
-              // const refreshToken = uuidv4();
-              // console.log(refreshToken);
-
-              // User.updateRefreshToken(user.id, refreshToken, function (err, res) {
-                
-              //   if (err) {
-              //     // res.status(403).json({
-              //     //   type: 'error',
-              //     //   message: 'Something went wrong, please try again later'
-              //     // });
-              //   console.log("Something went wrong, please try again later");
-
-              //   }
-              //   console.log("tokegfdfhn is ");
-  
-              //   // res.status(200).json({
-              //   //   type: 'success',
-              //   //   message: {
-              //   //     accessToken: token,
-              //   //     refreshToken: refreshToken,
-              //   //     role: user.type,
-              //   //     expiresIn: Math.floor(Date.now() / 1000) + (60 * 60)
-              //   //   }
-              //   // });
-              // });
-
+              token1 = token;
               var newTrainer = trainer.toJSON();
               newTrainer.token = token1;
-            return done(null, newTrainer);
-            }));
-            // var newUser = user.toJSON();
-            // newUser.refreshToken = token1;
-            // console.log("token is ");
-            // console.log(newUser.refreshToken);
-            // console.log(newUser.token);
-            // console.log(token1);
-            // console.log(newUser);
-
-            // return done(null, newUser);
+              return done(null, newTrainer);
+            });
           } else {
-            console.log("Invalid password");
-            return done(null, false, { message: "Invalid password" });
+            return done(null, false, { message: "Invalid credentials" });
           }
         });
       });
     })
   );
 
+  // Single Google strategy handles both login and account-linking flows.
+  // If req.session.linkTrainerId is set, it's a link flow — return only the
+  // Google profile. Otherwise it's a login flow — find or create a trainer.
+  passport.use(
+    "google",
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3005/api/auth/google/callback",
+        passReqToCallback: true,
+      },
+      function (req, accessToken, refreshToken, profile, done) {
+        const email =
+          profile.emails && profile.emails[0]
+            ? profile.emails[0].value
+            : null;
+
+        if (req.session && req.session.linkTrainerId) {
+          return done(null, { googleId: profile.id, email, isLinkFlow: true });
+        }
+
+        Trainer.findOrCreateByGoogle(profile, function (err, trainer) {
+          if (err) return done(err);
+          if (!trainer) return done(null, false);
+          return done(null, trainer);
+        });
+      }
+    )
+  );
+
   passport.serializeUser(function (user, done) {
-    done(null, user.id);
-  });
-  
-  passport.deserializeUser(function (id, done) {
-    User.getUserById(id, function (err, user) {
-      done(err, user);
-    });
+    if (user.isLinkFlow) {
+      done(null, '__link__:' + JSON.stringify({ googleId: user.googleId, email: user.email }));
+    } else {
+      done(null, user.id);
+    }
   });
 
-  passport.serializeUser(function (trainer, done) {
-    done(null, trainer.id);
-  });
-  
-  passport.deserializeUser(function (id, done) {
-    Trainer.getTrainerById(id, function (err, trainer) {
+  passport.deserializeUser(function (data, done) {
+    if (typeof data === 'string' && data.startsWith('__link__:')) {
+      try {
+        const parsed = JSON.parse(data.substring(9));
+        return done(null, { ...parsed, isLinkFlow: true });
+      } catch (e) {
+        return done(null, false);
+      }
+    }
+    Trainer.getTrainerById(data, function (err, trainer) {
       done(err, trainer);
     });
   });

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const passportInit = require("../auth/passport");
+const { validateNumeric, validateText, validateEmail, validatePassword, handleValidationErrors, body } = require("../utils/validators");
 
 var Trainer = require("../logic/trainer");
 
@@ -22,7 +23,6 @@ function sendTrainer(id,  req, res) {
             address: req.user.address,
             status: req.user.status,
             workplace: req.user.workplace,
-            token: req.user.token,
           })
         );
       });

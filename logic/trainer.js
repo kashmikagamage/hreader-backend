@@ -127,6 +127,73 @@ module.exports.updateTrainer = function (id, newTrainer, callback) {
     });
 };
 
+module.exports.getTrainerByGoogleId = function (googleId, callback) {
+  Trainer.findOne({ where: { googleId } })
+    .then(trainer => callback(null, trainer))
+    .catch(err => callback(err));
+};
+
+module.exports.linkGoogleAccount = function (trainerId, googleId, email, callback) {
+  Trainer.update({ googleId, email }, { where: { id: trainerId } })
+    .then(result => callback(null, result))
+    .catch(err => callback(err));
+};
+
+module.exports.unlinkGoogleAccount = function (trainerId, callback) {
+  Trainer.update({ googleId: null, email: null }, { where: { id: trainerId } })
+    .then(result => callback(null, result))
+    .catch(err => callback(err));
+};
+
+module.exports.findOrCreateByGoogle = function (profile, callback) {
+  const googleId = profile.id;
+  const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+  const firstname = (profile.name && profile.name.givenName) || 'Unknown';
+  const lastname = (profile.name && profile.name.familyName) || 'Unknown';
+
+  // First try to find by googleId
+  Trainer.findOne({ where: { googleId } })
+    .then(trainer => {
+      if (trainer) return callback(null, trainer);
+
+      // Try to find by email to link accounts
+      if (!email) return callback(new Error('No email from Google profile'));
+
+      Trainer.findOne({ where: { email } })
+        .then(existing => {
+          if (existing) {
+            // Link the Google account to the existing trainer
+            return existing.update({ googleId })
+              .then(updated => callback(null, updated))
+              .catch(err => callback(err));
+          }
+
+          // Create a new trainer with Google profile data
+          bcrypt.genSalt(saltRounds, function (err, salt) {
+            bcrypt.hash(require('crypto').randomBytes(32).toString('hex'), salt, function (err, hash) {
+              Trainer.create({
+                googleId,
+                email,
+                firstname,
+                lastname,
+                nic: 'GOOGLE_' + googleId,
+                password: hash,
+                telno: '0000000000',
+                address: 'Not provided',
+                gender: 'Not specified',
+                status: 'Active',
+                workplace: 'Not provided'
+              })
+                .then(newTrainer => callback(null, newTrainer))
+                .catch(err => callback(err));
+            });
+          });
+        })
+        .catch(err => callback(err));
+    })
+    .catch(err => callback(err));
+};
+
 module.exports.getTrainersAdmin = function ( callback) {
     Trainer.findAll()
     .then((trainer) => {

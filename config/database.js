@@ -1,10 +1,7 @@
 const Sequelize = require("sequelize");
-
-
-
-db = new Sequelize("test", "root", "1234", {
-  host: "localhost",
-  port: 3306,
+db = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
   dialect: "mysql",
   dialectOptions: {
     // useUTC: false, //for reading from database
@@ -22,7 +19,7 @@ db = new Sequelize("test", "root", "1234", {
 });
 
 
-db.sync({ force: false }).then(() => {
+db.sync({ alter: true }).then(() => {
 
 });
 module.exports = db;

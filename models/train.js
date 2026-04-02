@@ -28,6 +28,7 @@ var Train = db.define('train', {
 
 User.belongsToMany(Trainer, { through: Train });
 Trainer.belongsToMany(User, { through: Train });
+Train.belongsTo(User, { foreignKey: 'userId' });
 
 // Train.hasOne(User, {
 //     foreignKey: 'userId'

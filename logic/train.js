@@ -1,24 +1,38 @@
 
 var Train = require("../models/train");
+var User = require("../models/user");
 
 
 module.exports.createTrain = function (newTrain, callback) {
   console.log("Create Trainer");
-      console.log(newTrain);
+  console.log(newTrain);
 
-      Train.create(newTrain)
-        .then((train) => {
-          callback(null, train);
-        })
-        .catch((err) => {
-          callback(err);
-        });
-    
+  Train.create(newTrain)
+    .then((train) => {
+      callback(null, train);
+    })
+    .catch((err) => {
+      callback(err);
+    });
+
 };
 
 
 module.exports.getTrainByTrainerId = function (trainerId, callback) {
   var query = { trainerId: trainerId };
+  Train.findAll({
+    where: query,
+    include: [{
+      model: User,
+      attributes: ['id', 'nic', 'firstname', 'lastname', 'gender', 'address', 'status', 'telno', 'height', 'weight']
+    }]
+  }).then((train) => {
+    callback(null, train);
+  });
+};
+
+module.exports.getTrainByUserId = function (userId, callback) {
+  var query = { userId: userId };
   //User.findOne(query,callback);
   Train.findAll({
     where: query,
@@ -28,27 +42,16 @@ module.exports.getTrainByTrainerId = function (trainerId, callback) {
   });
 };
 
-module.exports.getTrainByUserId = function (userId, callback) {
-    var query = { userId: userId };
-    //User.findOne(query,callback);
-    Train.findAll({
-      where: query,
-    }).then((train) => {
-      //console.log(user)
-      callback(null, train);
-    });
-  };
-  
-  module.exports.getTrainByTrainerIdAndUserId = function (trainerId, userId, callback) {
-    var query = { userId: userId , trainerId: trainerId };
-    //User.findOne(query,callback);
-    Train.findOne({
-      where: query,
-    }).then((train) => {
-      //console.log(user)
-      callback(null, train);
-    });
-  };
+module.exports.getTrainByTrainerIdAndUserId = function (trainerId, userId, callback) {
+  var query = { userId: userId, trainerId: trainerId };
+  //User.findOne(query,callback);
+  Train.findOne({
+    where: query,
+  }).then((train) => {
+    //console.log(user)
+    callback(null, train);
+  });
+};
 
 // module.exports.getTrainerByNIC = function (nic, callback) {
 //   var query = { nic: nic };
