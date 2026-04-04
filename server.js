@@ -23,6 +23,9 @@ var api = require("./routes/api");
 
 var app = express();
 
+// Disable X-Powered-By header for security
+app.disable('x-powered-by');
+
 //BodyParser Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -39,11 +42,15 @@ app.use(
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,
+    name: 'pulse-session',
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      path: '/',
+      domain: process.env.COOKIE_DOMAIN,
     },
   })
 );
@@ -56,7 +63,7 @@ app.use(cors({
 //Security Headers
 app.use((req, res, next) => {
   // Prevent embedding in iframes (Clickjacking)
-  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; frame-ancestors 'none'");
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
   res.setHeader("X-Frame-Options", "DENY");
   // Prevent MIME-type sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");

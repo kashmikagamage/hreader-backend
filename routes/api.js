@@ -161,23 +161,37 @@ router.post(
   }
 );
 
-router.post("/getUsers", function (req, res) {
-  var userId = req.body.userId;
-  if (userId) {
-    User.getUserById(userId, function (err, user) {
-      if (err || !user) {
-        res.status(404).json({ type: 'error', message: 'User not found' });
-        return;
+router.post("/getUsers", requireTrainerAuth,
+  body("userId").isInt({ min: 1 }).withMessage("Invalid user ID"),
+  handleValidationErrors,
+  function (req, res) {
+    const userId = req.body.userId;
+    const trainerId = req.trainerId;
+
+    // verify this trainer is linked to this user in train table
+    Train.getTrainByTrainerIdAndUserId(trainerId, userId, function (err, train) {
+      if (err) {
+        console.error("getTrainByTrainerIdAndUserId error:", err);
+        return res.status(500).json({ error: "Failed to verify authorization" });
       }
-      res.status(200).json({
-        type: 'done',
-        user: user
+
+      if (!train) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      User.getUserById(userId, function (err, user) {
+        if (err || !user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json({
+          type: 'done',
+          user: user
+        });
       });
     });
-  } else {
-    res.status(400).json({ type: 'error', message: 'User ID is required' });
   }
-});
+);
 
 router.get("/getUsers", function (req, res) {
   if (req.user) {
@@ -455,6 +469,29 @@ router.post("/getTrainByTrainerId", requireTrainerAuth, function (req, res) {
       })
     );
   }
+});
+
+router.post("/getTrainByTrainerIdAndUserId", requireTrainerAuth, 
+  body("userId").isInt({ min: 1 }).withMessage("Invalid user ID"),
+  handleValidationErrors,
+  function (req, res) {
+  const trainerId = req.trainerId; // secure
+  const userId = req.body.userId;
+
+  Train.getTrainByTrainerIdAndUserId(trainerId, userId, function (err, train) {
+    if (err) {
+      console.log("errors" + err.message);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    if (!train) {
+      return res.status(403).json({ error: "Unauthorized access" });
+    }
+
+    res.status(200).json({
+      type: 'done',
+      train: train
+    });
+  });
 });
 
 
